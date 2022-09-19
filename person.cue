@@ -2,7 +2,7 @@ package foo
 
 import "time"
 
-// describe a person
+// ## describe a person
 #person: {
 	// ### full name
 	//
