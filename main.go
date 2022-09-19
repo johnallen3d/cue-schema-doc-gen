@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-	input, err := os.Open("/usr/src/app/person.cue")
+	path := os.Args[1]
+	input, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,12 +85,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	result, err := os.Create("/usr/src/app/output.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer result.Close()
-
 	template := template.Must(template.ParseFiles("index.html"))
 	if err != nil {
 		panic(err)
@@ -97,7 +92,7 @@ func main() {
 
 	html := markdown.ToHTML(output.Bytes(), nil, nil)
 
-	err = template.Execute(result, string(html))
+	err = template.Execute(os.Stdout, string(html))
 	if err != nil {
 		panic(err)
 	}
