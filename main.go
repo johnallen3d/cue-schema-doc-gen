@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/yuin/goldmark"
+	"github.com/gomarkdown/markdown"
 )
 
 func main() {
@@ -19,12 +19,10 @@ func main() {
 	}
 	defer input.Close()
 
-	output := new(strings.Builder)
-
 	inComment := false
 	indent := 0
 
-	var markdown bytes.Buffer
+	var output bytes.Buffer
 	var schema bytes.Buffer
 	var content bytes.Buffer
 
@@ -43,11 +41,10 @@ func main() {
 		}
 		if strings.HasPrefix(strings.TrimSpace(line), "//") {
 			if !inComment && output.Len() > 0 {
-				output.WriteString("<pre class=\"prettyprint\" style=\"overflow-x:scroll;\">\n")
+				output.WriteString("<pre>\n<code class=\"language-go\">\n")
 				output.Write(schema.Bytes())
 				schema.Reset()
-				output.WriteString("\n")
-				output.WriteString("</pre>\n")
+				output.WriteString("</code>\n</pre>\n")
 			}
 
 			indent = strings.Count(line, "\t")
@@ -58,12 +55,8 @@ func main() {
 			inComment = true
 		} else {
 			if inComment {
-				if err = goldmark.Convert(content.Bytes(), &markdown); err != nil {
-					panic(err)
-				}
-				fmt.Fprintf(output, "<div class=\"indent-%d\">\n", indent)
-				output.Write(markdown.Bytes())
-				markdown.Reset()
+				output.WriteString(fmt.Sprintf("<div class=\"indent-%d\">\n", indent))
+				output.Write(content.Bytes())
 				content.Reset()
 				output.WriteString("\n")
 				output.WriteString("</div>\n")
@@ -73,11 +66,9 @@ func main() {
 			inComment = false
 		}
 	}
-	output.WriteString("<pre class=\"prettyprint\">")
-	output.WriteString("\n")
+	output.WriteString("<pre>\n<code class=\"language-go\">\n")
 	output.Write(schema.Bytes())
-	output.WriteString("</pre>")
-	output.WriteString("\n")
+	output.WriteString("</code>\n</pre>")
 
 	if err = scanner.Err(); err != nil {
 		log.Fatal(err)
@@ -93,7 +84,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = template.Execute(result, output)
+
+	html := markdown.ToHTML(output.Bytes(), nil, nil)
+
+	err = template.Execute(result, string(html))
 	if err != nil {
 		panic(err)
 	}
