@@ -25,11 +25,13 @@ func main() {
 	var output bytes.Buffer
 	var schema bytes.Buffer
 	var content bytes.Buffer
+	var attribute string
 
 	scanner := bufio.NewScanner(input)
 
 	for scanner.Scan() {
 		line := scanner.Text()
+
 		if strings.HasPrefix(line, "package ") {
 			continue
 		}
@@ -39,6 +41,7 @@ func main() {
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
 		}
+
 		if strings.HasPrefix(strings.TrimSpace(line), "//") {
 			if !inComment && output.Len() > 0 {
 				output.WriteString("<pre>\n<code class=\"language-go\">\n")
@@ -54,8 +57,15 @@ func main() {
 
 			inComment = true
 		} else {
+			raw := strings.TrimSpace(line)
+			if strings.Contains(raw, ":") {
+				attribute = raw[:strings.IndexByte(raw, ':')]
+			} else {
+				attribute = ""
+			}
+
 			if inComment {
-				output.WriteString(fmt.Sprintf("<div class=\"indent-%d\">\n", indent))
+				output.WriteString(fmt.Sprintf("<div id=\"attribute-%s\" class=\"indent-%d\">\n", attribute, indent))
 				output.Write(content.Bytes())
 				content.Reset()
 				output.WriteString("\n")
