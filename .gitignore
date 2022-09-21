@@ -1,3 +1,4 @@
 doc-gen
 output.html
 tmp/*
+test/dist/

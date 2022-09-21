@@ -19,5 +19,5 @@ docker-compose run --rm mod
 - build module, execute and view output
 
 ```bash
-go build && ./doc-gen programs.cue > output.html
+go build && ./doc-gen ./test/schema/ ./test/dist/
 ```
