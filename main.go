@@ -32,13 +32,13 @@ func main() {
 
 	schemas := []schema{}
 
-	pattern, e := regexp.Compile(`.*\.cue$`)
-	if e != nil {
-		log.Fatal(e)
+	pattern, err := regexp.Compile(`.*\.cue$`)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	e = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err == nil && pattern.MatchString(info.Name()) {
+	err = filepath.Walk(path, func(path string, info os.FileInfo, e error) error {
+		if e == nil && pattern.MatchString(info.Name()) {
 			pathOnly := strings.Replace(path, info.Name(), "", 1)
 			if pathOnly == "" {
 				pathOnly = "."
@@ -48,8 +48,8 @@ func main() {
 		}
 		return nil
 	})
-	if e != nil {
-		log.Fatal(e)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	for _, schema := range schemas {
@@ -144,19 +144,19 @@ func export(
 	destPath := filepath.Join(dest, file.path)
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
 		if err = os.MkdirAll(destPath, os.ModePerm); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
 	outFile := strings.Replace(file.name, "cue", "html", 1)
 	document, err := os.Create(filepath.Join(destPath, outFile))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer document.Close()
 
 	err = template.Execute(document, string(html))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
