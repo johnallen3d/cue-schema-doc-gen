@@ -138,7 +138,7 @@ func export(
 	file schema,
 	template *template.Template,
 	dest string,
-	output bytes.Buffer
+	output bytes.Buffer,
 ) {
 	html := markdown.ToHTML(output.Bytes(), nil, nil)
 
