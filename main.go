@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -20,16 +21,14 @@ type schema struct {
 }
 
 func main() {
-	path := "."
-	dest := "dist"
-	template := template.Must(template.ParseFiles("index.html"))
+	var path string
+	var dest string
 
-	if len(os.Args) > 1 {
-		path = os.Args[1]
-	}
-	if len(os.Args) > 2 {
-		dest = os.Args[2]
-	}
+	flag.StringVar(&path, "i", ".", "input path")
+	flag.StringVar(&dest, "o", "dist", "output path")
+	flag.Parse()
+
+	template := template.Must(template.ParseFiles("index.html"))
 
 	schemas := []schema{}
 
