@@ -23,6 +23,7 @@ var template = t.Must(t.New("doc-gen").Parse(templateContent))
 type schema struct {
 	path string
 	name string
+	dest string
 }
 
 func main() {
@@ -46,7 +47,7 @@ func main() {
 			if pathOnly == "" {
 				pathOnly = "."
 			}
-			file := schema{path: pathOnly, name: info.Name()}
+			file := schema{path: pathOnly, name: info.Name(), dest: dest}
 			schemas = append(schemas, file)
 		}
 		return nil
@@ -56,7 +57,7 @@ func main() {
 	}
 
 	for _, schema := range schemas {
-		export(schema, dest, transform(schema))
+		export(schema, transform(schema))
 	}
 }
 
@@ -138,12 +139,11 @@ func transform(file schema) bytes.Buffer {
 
 func export(
 	file schema,
-	dest string,
 	output bytes.Buffer,
 ) {
 	html := markdown.ToHTML(output.Bytes(), nil, nil)
 
-	destPath := filepath.Join(dest, file.path)
+	destPath := filepath.Join(file.dest, file.path)
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
 		if err = os.MkdirAll(destPath, os.ModePerm); err != nil {
 			log.Fatal(err)
