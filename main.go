@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
 	"flag"
 	"fmt"
 	"log"
@@ -10,10 +11,14 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"text/template"
+	t "text/template"
 
 	"github.com/gomarkdown/markdown"
 )
+
+//go:embed template.html
+var templateContent string
+var template = t.Must(t.New("doc-gen").Parse(templateContent))
 
 type schema struct {
 	path string
@@ -27,8 +32,6 @@ func main() {
 	flag.StringVar(&path, "i", ".", "input path")
 	flag.StringVar(&dest, "o", "dist", "output path")
 	flag.Parse()
-
-	template := template.Must(template.ParseFiles("index.html"))
 
 	schemas := []schema{}
 
@@ -53,7 +56,7 @@ func main() {
 	}
 
 	for _, schema := range schemas {
-		export(schema, template, dest, transform(schema))
+		export(schema, dest, transform(schema))
 	}
 }
 
@@ -135,7 +138,6 @@ func transform(file schema) bytes.Buffer {
 
 func export(
 	file schema,
-	template *template.Template,
 	dest string,
 	output bytes.Buffer,
 ) {
