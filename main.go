@@ -67,7 +67,7 @@ func gatherSchema(path string, dest string) ([]schema, error) {
 		return []schema{}, err
 	}
 	if len(schemas) == 0 {
-		return []schema{}, fmt.Errorf("No schema found at %s", path)
+		return []schema{}, fmt.Errorf("no schema found at %s", path)
 	}
 
 	return schemas, nil
