@@ -27,8 +27,8 @@ docker-compose build
 docker-compose run --rm mod
 ```
 
-- build module, execute and view output
+- convert schema to HTML
 
 ```bash
-go build && ./doc-gen ./test/schema/ ./test/dist/
+go run main.go ./test/schema/ ./test/dist/
 ```
