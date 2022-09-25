@@ -21,9 +21,22 @@ var templateContent string
 var template = t.Must(t.New("doc-gen").Parse(templateContent))
 
 type schema struct {
-	path string
-	name string
-	dest string
+	path        string
+	name        string
+	transformed bytes.Buffer
+	dest        string
+}
+
+func (s schema) Path() string {
+	return s.path
+}
+
+func (s schema) Name() string {
+	return s.name
+}
+
+func (s schema) Dest() string {
+	return s.dest
 }
 
 func main() {
@@ -34,14 +47,24 @@ func main() {
 	flag.StringVar(&dest, "o", "dist", "output path")
 	flag.Parse()
 
-	schemas := []schema{}
-
-	pattern, err := regexp.Compile(`.*\.cue$`)
+	schemas, err := gatherSchema(path, dest)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = filepath.Walk(path, func(path string, info os.FileInfo, e error) error {
+	for _, schema := range schemas {
+		// this is pretty but probably won't work in the long run
+		// Transform() should _probably_ `return err`
+		schema.Transform().Export()
+	}
+}
+
+func gatherSchema(path string, dest string) ([]schema, error) {
+	schemas := []schema{}
+
+	pattern, _ := regexp.Compile(`.*\.cue$`)
+
+	err := filepath.Walk(path, func(path string, info os.FileInfo, e error) error {
 		if e == nil && pattern.MatchString(info.Name()) {
 			pathOnly := strings.Replace(path, info.Name(), "", 1)
 			if pathOnly == "" {
@@ -53,16 +76,17 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		return []schema{}, err
+	}
+	if len(schemas) == 0 {
+		return []schema{}, fmt.Errorf("No schema found at %s", path)
 	}
 
-	for _, schema := range schemas {
-		export(schema, transform(schema))
-	}
+	return schemas, nil
 }
 
-func transform(file schema) bytes.Buffer {
-	inputPath := filepath.Join(file.path, file.name)
+func (s *schema) Transform() *schema {
+	inputPath := filepath.Join(s.Path(), s.Name())
 	input, err := os.Open(inputPath)
 	if err != nil {
 		log.Fatal(err)
@@ -134,23 +158,22 @@ func transform(file schema) bytes.Buffer {
 		log.Fatal(err)
 	}
 
-	return output
+	s.transformed = output
+
+	return s
 }
 
-func export(
-	file schema,
-	output bytes.Buffer,
-) {
-	html := markdown.ToHTML(output.Bytes(), nil, nil)
+func (s *schema) Export() {
+	html := markdown.ToHTML(s.transformed.Bytes(), nil, nil)
 
-	destPath := filepath.Join(file.dest, file.path)
+	destPath := filepath.Join(s.Dest(), s.Path())
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
 		if err = os.MkdirAll(destPath, os.ModePerm); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	outFile := strings.Replace(file.name, "cue", "html", 1)
+	outFile := strings.Replace(s.Name(), "cue", "html", 1)
 	document, err := os.Create(filepath.Join(destPath, outFile))
 	if err != nil {
 		log.Fatal(err)
