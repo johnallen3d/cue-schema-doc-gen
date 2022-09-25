@@ -27,18 +27,6 @@ type schema struct {
 	dest        string
 }
 
-func (s schema) Path() string {
-	return s.path
-}
-
-func (s schema) Name() string {
-	return s.name
-}
-
-func (s schema) Dest() string {
-	return s.dest
-}
-
 func main() {
 	var path string
 	var dest string
@@ -86,7 +74,7 @@ func gatherSchema(path string, dest string) ([]schema, error) {
 }
 
 func (s *schema) Transform() *schema {
-	inputPath := filepath.Join(s.Path(), s.Name())
+	inputPath := filepath.Join(s.path, s.name)
 	input, err := os.Open(inputPath)
 	if err != nil {
 		log.Fatal(err)
@@ -166,14 +154,14 @@ func (s *schema) Transform() *schema {
 func (s *schema) Export() {
 	html := markdown.ToHTML(s.transformed.Bytes(), nil, nil)
 
-	destPath := filepath.Join(s.Dest(), s.Path())
+	destPath := filepath.Join(s.dest, s.path)
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
 		if err = os.MkdirAll(destPath, os.ModePerm); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	outFile := strings.Replace(s.Name(), "cue", "html", 1)
+	outFile := strings.Replace(s.name, "cue", "html", 1)
 	document, err := os.Create(filepath.Join(destPath, outFile))
 	if err != nil {
 		log.Fatal(err)
