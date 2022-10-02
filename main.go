@@ -40,10 +40,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for _, schema := range schemas {
-		// this is pretty but probably won't work in the long run
-		// Transform() should _probably_ `return err`
-		schema.Transform().Export()
+	results := make(chan bool)
+
+	for _, s := range schemas {
+		go func(s schema) {
+			s.Transform()
+			s.Export()
+			results <- true
+		}(s)
+	}
+
+	for i := 0; i < len(schemas); i++ {
+		<-results
 	}
 }
 
@@ -73,7 +81,7 @@ func gatherSchema(path string, dest string) ([]schema, error) {
 	return schemas, nil
 }
 
-func (s *schema) Transform() *schema {
+func (s *schema) Transform() {
 	inputPath := filepath.Join(s.path, s.name)
 	input, err := os.Open(inputPath)
 	if err != nil {
@@ -147,8 +155,6 @@ func (s *schema) Transform() *schema {
 	}
 
 	s.transformed = output
-
-	return s
 }
 
 func (s *schema) Export() {
